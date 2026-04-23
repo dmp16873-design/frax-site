@@ -1,0 +1,374 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="FRAX RU">
+<meta name="theme-color" content="#0b5fff">
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 180 180'><rect width='180' height='180' rx='36' fill='%230b5fff'/><text x='90' y='108' font-size='56' font-family='-apple-system,Helvetica' font-weight='700' fill='white' text-anchor='middle'>FRAX</text></svg>">
+<title>FRAX — Калькулятор 10-летнего риска перелома (РФ)</title>
+<style>
+  :root {
+    --bg: #f2f4f8;
+    --card: #ffffff;
+    --text: #111827;
+    --muted: #6b7280;
+    --primary: #0b5fff;
+    --primary-dark: #0846c4;
+    --border: #e5e7eb;
+    --green: #16a34a;
+    --amber: #d97706;
+    --red: #dc2626;
+    --shadow: 0 1px 3px rgba(0,0,0,0.06), 0 1px 2px rgba(0,0,0,0.04);
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #0b1220;
+      --card: #151c2c;
+      --text: #e5e7eb;
+      --muted: #9ca3af;
+      --border: #263149;
+      --shadow: 0 1px 3px rgba(0,0,0,0.5);
+    }
+  }
+  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  html, body { margin: 0; padding: 0; background: var(--bg); color: var(--text);
+    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Helvetica Neue", Arial, sans-serif;
+    font-size: 16px; line-height: 1.4; }
+  body { padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left); }
+  header {
+    background: var(--primary); color: white; padding: 14px 16px 12px;
+    position: sticky; top: 0; z-index: 10;
+    padding-top: calc(14px + env(safe-area-inset-top));
+  }
+  header h1 { margin: 0; font-size: 18px; font-weight: 600; letter-spacing: 0.2px; }
+  header .sub { font-size: 12px; opacity: 0.85; margin-top: 2px; }
+  main { max-width: 720px; margin: 0 auto; padding: 12px; }
+  .card {
+    background: var(--card); border: 1px solid var(--border); border-radius: 12px;
+    padding: 12px 14px; margin-bottom: 12px; box-shadow: var(--shadow);
+  }
+  h2 { font-size: 15px; margin: 0 0 10px; font-weight: 600; color: var(--primary); }
+  label { display: block; font-size: 14px; margin-bottom: 4px; color: var(--muted); }
+  .row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 10px; }
+  .row-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; margin-bottom: 10px; }
+  input[type="number"], select {
+    width: 100%; padding: 10px 12px; font-size: 16px; border: 1px solid var(--border);
+    border-radius: 8px; background: var(--card); color: var(--text);
+    appearance: none; -webkit-appearance: none;
+  }
+  input[type="number"]:focus, select:focus { outline: none; border-color: var(--primary); }
+  .checks { display: grid; grid-template-columns: 1fr; gap: 6px; }
+  .check {
+    display: flex; align-items: center; gap: 10px; padding: 9px 10px;
+    border: 1px solid var(--border); border-radius: 8px; background: var(--card);
+    font-size: 14px; line-height: 1.3;
+  }
+  .check input[type="checkbox"] {
+    width: 22px; height: 22px; accent-color: var(--primary); flex-shrink: 0;
+  }
+  .check span { flex: 1; }
+  .hint { font-size: 12px; color: var(--muted); margin-top: 4px; }
+  button {
+    width: 100%; padding: 13px; font-size: 16px; font-weight: 600;
+    border: none; border-radius: 10px; background: var(--primary); color: white;
+    cursor: pointer; -webkit-appearance: none;
+  }
+  button:active { background: var(--primary-dark); }
+  button.secondary { background: transparent; color: var(--primary); border: 1px solid var(--primary); }
+  button.ghost { background: transparent; color: var(--muted); border: 1px solid var(--border); }
+  .btn-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  .result {
+    padding: 14px; border-radius: 10px; margin-top: 4px;
+    border: 1px solid var(--border); background: var(--card);
+  }
+  .result.low    { border-left: 6px solid var(--green); }
+  .result.mid    { border-left: 6px solid var(--amber); }
+  .result.high   { border-left: 6px solid var(--red); }
+  .val { font-size: 28px; font-weight: 700; margin: 4px 0; }
+  .val.mof { color: var(--primary); }
+  .val.hf  { color: var(--red); }
+  .inline { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; }
+  .cat { font-size: 13px; font-weight: 600; padding: 4px 10px; border-radius: 999px; display: inline-block; }
+  .cat.low { background: rgba(22,163,74,0.12); color: var(--green); }
+  .cat.mid { background: rgba(217,119,6,0.12); color: var(--amber); }
+  .cat.high{ background: rgba(220,38,38,0.12); color: var(--red); }
+  .footer-note { font-size: 11px; color: var(--muted); padding: 8px 4px 20px; text-align: center; line-height: 1.5; }
+  .footer-note a { color: var(--primary); text-decoration: none; }
+  details { margin-top: 6px; font-size: 13px; color: var(--muted); }
+  summary { cursor: pointer; color: var(--primary); font-weight: 500; }
+  .bmi-display { font-size: 13px; color: var(--muted); margin-top: 4px; }
+  .divider { height: 1px; background: var(--border); margin: 10px 0; }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>FRAX® — Калькулятор 10-летнего риска перелома</h1>
+  <div class="sub">Российская Федерация • Информационно-справочный инструмент</div>
+</header>
+
+<main>
+
+  <div class="card">
+    <h2>Демографические данные</h2>
+    <div class="row-3">
+      <div>
+        <label for="sex">Пол</label>
+        <select id="sex">
+          <option value="F">Женский</option>
+          <option value="M">Мужской</option>
+        </select>
+      </div>
+      <div>
+        <label for="age">Возраст (40–90)</label>
+        <input type="number" id="age" min="40" max="90" step="1" inputmode="numeric" placeholder="65">
+      </div>
+      <div>
+        <label for="weight">Вес, кг</label>
+        <input type="number" id="weight" min="30" max="200" step="0.5" inputmode="decimal" placeholder="70">
+      </div>
+    </div>
+    <div class="row">
+      <div>
+        <label for="height">Рост, см</label>
+        <input type="number" id="height" min="120" max="220" step="0.5" inputmode="decimal" placeholder="165">
+      </div>
+      <div>
+        <label>ИМТ</label>
+        <div class="bmi-display" id="bmi">—</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>Клинические факторы риска</h2>
+    <div class="checks">
+      <label class="check"><input type="checkbox" id="prev_fracture"><span>Предшествующий перелом низкоэнергетический (после 50 лет)</span></label>
+      <label class="check"><input type="checkbox" id="parent_hip"><span>Перелом шейки бедра у родителей</span></label>
+      <label class="check"><input type="checkbox" id="smoking"><span>Курение в настоящее время</span></label>
+      <label class="check"><input type="checkbox" id="glucocorticoids"><span>Глюкокортикоиды ≥ 5 мг/сут преднизолона ≥ 3 мес</span></label>
+      <label class="check"><input type="checkbox" id="rheumatoid"><span>Ревматоидный артрит</span></label>
+      <label class="check"><input type="checkbox" id="secondary_osteop"><span>Вторичный остеопороз (тип 1 СД, тиреотоксикоз, гипогонадизм и др.)</span></label>
+      <label class="check"><input type="checkbox" id="alcohol"><span>Алкоголь ≥ 3 единиц в сутки</span></label>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>МПК (при наличии DXA)</h2>
+    <div class="row">
+      <div>
+        <label for="tscore">T-критерий шейки бедра</label>
+        <input type="number" id="tscore" step="0.1" min="-5" max="5" inputmode="decimal" placeholder="например, −2.5">
+      </div>
+      <div>
+        <label>&nbsp;</label>
+        <div class="hint">Оставьте пустым, если DXA не выполнялась</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="btn-row">
+      <button id="calcBtn">Рассчитать FRAX</button>
+      <button id="clearBtn" class="ghost">Очистить</button>
+    </div>
+    <div class="divider"></div>
+    <button id="officialBtn" class="secondary">Официальный FRAX (online)</button>
+    <div class="hint" style="margin-top: 6px; text-align: center;">
+      frax.shef.ac.uk/FRAX/tool.aspx?country=13
+    </div>
+  </div>
+
+  <div class="card" id="resultCard" style="display: none;">
+    <h2>Результат</h2>
+    <div class="result" id="resultBox">
+      <div class="inline">
+        <div>
+          <div class="hint">Основной остеопоротический перелом (MOF)</div>
+          <div class="val mof" id="mofVal">—</div>
+        </div>
+        <div style="text-align: right;">
+          <div class="hint">Перелом шейки бедра (HF)</div>
+          <div class="val hf" id="hfVal">—</div>
+        </div>
+      </div>
+      <div class="divider"></div>
+      <div class="inline">
+        <div class="hint">Категория риска</div>
+        <div><span class="cat" id="catLabel">—</span></div>
+      </div>
+      <div class="hint" id="recText" style="margin-top: 8px;"></div>
+    </div>
+  </div>
+
+  <div class="card">
+    <details>
+      <summary>Пороги риска (РФ, клинические рекомендации «Остеопороз»)</summary>
+      <div style="margin-top: 8px;">
+        <b>Высокий риск (показан старт антиостеопоротической терапии):</b><br>
+        • HF ≥ 3%, или<br>
+        • MOF ≥ 20% (независимо от возраста), или<br>
+        • MOF выше порога вмешательства (возраст-зависимый, NOGG).
+        <br><br>
+        <b>Переходная зона (показана DXA):</b> 10% ≤ MOF &lt; 20%.
+        <br><br>
+        <b>Низкий риск:</b> MOF &lt; 10%, HF &lt; 3%.
+      </div>
+    </details>
+    <details style="margin-top: 10px;">
+      <summary>Об этом калькуляторе</summary>
+      <div style="margin-top: 8px;">
+        Приложение использует <b>опубликованную аппроксимацию</b> алгоритма FRAX® (Kanis et al., 2008;
+        Lesnyak O., 2012) для российской популяции. Исходная модель FRAX® является собственностью
+        University of Sheffield и не публикуется в открытых источниках.
+        <br><br>
+        Для <b>клинического применения и принятия решения</b> о назначении терапии используйте
+        официальный online-калькулятор FRAX® (страна: Russian Federation).
+        <br><br>
+        Данное приложение — <b>информационно-справочный инструмент</b> для быстрой оценки риска,
+        скрининга и обучения. Не заменяет официальный FRAX® и клиническое решение врача.
+      </div>
+    </details>
+  </div>
+
+  <div class="footer-note">
+    FRAX® — зарегистрированный товарный знак University of Sheffield.<br>
+    Версия 1.0 • Офлайн-совместимо • Данные не передаются на сервер.
+  </div>
+
+</main>
+
+<script>
+"use strict";
+
+const BASE_MOF_F = {40:2.0,45:2.5,50:3.5,55:5.0,60:7.0,65:9.5,70:12.5,75:16.0,80:19.5,85:22.0,90:23.5};
+const BASE_MOF_M = {40:1.5,45:2.0,50:2.7,55:3.7,60:5.0,65:6.7,70:8.8,75:10.9,80:12.5,85:13.0,90:13.0};
+const BASE_HF_F  = {40:0.1,45:0.2,50:0.4,55:0.7,60:1.3,65:2.3,70:3.8,75:6.2,80:9.2,85:12.3,90:15.0};
+const BASE_HF_M  = {40:0.1,45:0.2,50:0.3,55:0.5,60:0.9,65:1.5,70:2.5,75:4.0,80:5.8,85:7.5,90:9.0};
+
+const HR = {
+  prev_fracture:    { MOF: 1.85, HF: 1.70 },
+  parent_hip:       { MOF: 1.25, HF: 1.65 },
+  smoking:          { MOF: 1.35, HF: 1.60 },
+  glucocorticoids:  { MOF: 1.65, HF: 1.85 },
+  rheumatoid:       { MOF: 1.50, HF: 1.55 },
+  secondary_osteop: { MOF: 1.30, HF: 1.40 },
+  alcohol:          { MOF: 1.35, HF: 1.65 },
+};
+
+function interp(table, age) {
+  if (age <= 40) return table[40];
+  if (age >= 90) return table[90];
+  const a = Math.floor(age / 5) * 5;
+  const b = a + 5;
+  return table[a] + (table[b] - table[a]) * (age - a) / 5;
+}
+function bmiHR(bmi) {
+  if (bmi >= 30)   return { MOF: 0.88, HF: 0.75 };
+  if (bmi >= 25)   return { MOF: 0.94, HF: 0.85 };
+  if (bmi >= 20)   return { MOF: 1.00, HF: 1.00 };
+  if (bmi >= 18.5) return { MOF: 1.10, HF: 1.25 };
+  return { MOF: 1.25, HF: 1.60 };
+}
+function tscoreHR(t) {
+  if (t > -1.0) return { MOF: Math.pow(1/1.4, t + 1.0), HF: Math.pow(1/1.7, t + 1.0) };
+  const delta = Math.max(0, -t - 1.0);
+  return { MOF: Math.pow(1.6, delta), HF: Math.pow(2.0, delta) };
+}
+function probFromHR(base, totalHR) {
+  const p = Math.max(0, Math.min(99.5, base)) / 100.0;
+  return Math.min(99.9, (1 - Math.pow(1 - p, totalHR)) * 100);
+}
+function calculateFrax(input) {
+  const { sex, age, weight, height } = input;
+  const bmi = weight / Math.pow(height / 100, 2);
+  const baseMOF = interp(sex === "F" ? BASE_MOF_F : BASE_MOF_M, age);
+  const baseHF  = interp(sex === "F" ? BASE_HF_F  : BASE_HF_M,  age);
+  let hrMOF = 1, hrHF = 1;
+  for (const k of Object.keys(HR)) if (input[k]) { hrMOF *= HR[k].MOF; hrHF *= HR[k].HF; }
+  const bH = bmiHR(bmi); hrMOF *= bH.MOF; hrHF *= bH.HF;
+  if (input.tscore != null && !isNaN(input.tscore)) {
+    const tH = tscoreHR(input.tscore); hrMOF *= tH.MOF; hrHF *= tH.HF;
+  }
+  return { mof: probFromHR(baseMOF, hrMOF), hf: probFromHR(baseHF, hrHF), bmi };
+}
+function riskCategory(mof, hf) {
+  if (hf >= 3 || mof >= 20) return { level: "high", label: "Высокий риск",
+    text: "Показана антиостеопоротическая терапия и направление в СППП. Выполните DXA и лабораторное дообследование." };
+  if (mof >= 10) return { level: "mid", label: "Переходная зона",
+    text: "Показана DXA. Оценка по возраст-зависимому порогу NOGG." };
+  return { level: "low", label: "Низкий риск",
+    text: "Профилактика: кальций 1000–1200 мг/сут, витамин D, физическая активность. Повтор через 3–5 лет." };
+}
+
+const $ = (id) => document.getElementById(id);
+
+function updateBMI() {
+  const w = parseFloat($("weight").value), h = parseFloat($("height").value);
+  if (w > 0 && h > 0) {
+    const bmi = w / Math.pow(h / 100, 2);
+    const cat = bmi < 18.5 ? " (дефицит)" : bmi < 25 ? " (норма)" : bmi < 30 ? " (избыток)" : " (ожирение)";
+    $("bmi").textContent = bmi.toFixed(1) + cat;
+  } else $("bmi").textContent = "—";
+}
+$("weight").addEventListener("input", updateBMI);
+$("height").addEventListener("input", updateBMI);
+
+function validate() {
+  const age = parseInt($("age").value, 10);
+  const weight = parseFloat($("weight").value);
+  const height = parseFloat($("height").value);
+  if (isNaN(age) || age < 40 || age > 90) { alert("Возраст: 40–90 лет"); return null; }
+  if (isNaN(weight) || weight < 30 || weight > 200) { alert("Вес: 30–200 кг"); return null; }
+  if (isNaN(height) || height < 120 || height > 220) { alert("Рост: 120–220 см"); return null; }
+  const tRaw = $("tscore").value.trim();
+  let tscore = null;
+  if (tRaw !== "") {
+    const t = parseFloat(tRaw.replace("−","-").replace(",","."));
+    if (isNaN(t) || t < -5 || t > 5) { alert("T-критерий: от −5 до +5"); return null; }
+    tscore = t;
+  }
+  return { sex: $("sex").value, age, weight, height, tscore,
+    prev_fracture: $("prev_fracture").checked, parent_hip: $("parent_hip").checked,
+    smoking: $("smoking").checked, glucocorticoids: $("glucocorticoids").checked,
+    rheumatoid: $("rheumatoid").checked, secondary_osteop: $("secondary_osteop").checked,
+    alcohol: $("alcohol").checked };
+}
+
+$("calcBtn").addEventListener("click", () => {
+  const input = validate(); if (!input) return;
+  const r = calculateFrax(input);
+  const cat = riskCategory(r.mof, r.hf);
+  $("mofVal").textContent = r.mof.toFixed(1) + "%";
+  $("hfVal").textContent  = r.hf.toFixed(1)  + "%";
+  $("catLabel").textContent = cat.label;
+  $("catLabel").className = "cat " + cat.level;
+  $("recText").textContent = cat.text;
+  $("resultBox").className = "result " + cat.level;
+  $("resultCard").style.display = "block";
+  $("resultCard").scrollIntoView({ behavior: "smooth", block: "start" });
+});
+
+$("clearBtn").addEventListener("click", () => {
+  ["age","weight","height","tscore"].forEach(id => $(id).value = "");
+  ["prev_fracture","parent_hip","smoking","glucocorticoids","rheumatoid","secondary_osteop","alcohol"]
+    .forEach(id => $(id).checked = false);
+  $("sex").value = "F";
+  $("bmi").textContent = "—";
+  $("resultCard").style.display = "none";
+});
+
+$("officialBtn").addEventListener("click", () => {
+  window.open("https://frax.shef.ac.uk/FRAX/tool.aspx?country=13", "_blank", "noopener");
+});
+
+if ("serviceWorker" in navigator) {
+  window.addEventListener("load", () => navigator.serviceWorker.register("sw.js").catch(()=>{}));
+}
+</script>
+</body>
+</html>
